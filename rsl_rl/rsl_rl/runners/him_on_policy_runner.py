@@ -141,7 +141,8 @@ class HIMOnPolicyRunner:
                 start = stop
                 self.alg.compute_returns(critic_obs)
                 
-            mean_value_loss, mean_surrogate_loss, mean_estimation_loss, mean_swap_loss, mean_sym_loss = self.alg.update()
+            mean_value_loss, mean_surrogate_loss, mean_estimation_loss, \
+                mean_swap_loss, mean_sym_loss = self.alg.update() 
             stop = time.time()
             learn_time = stop - start
             if self.log_dir is not None:

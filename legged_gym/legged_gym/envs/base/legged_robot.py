@@ -44,7 +44,7 @@ from typing import Tuple, Dict
 from legged_gym import LEGGED_GYM_ROOT_DIR
 from legged_gym.envs.base.base_task import BaseTask
 from legged_gym.utils.terrain import Terrain
-from legged_gym.utils.math import quat_apply_yaw, wrap_to_pi, torch_rand_sqrt_float
+from legged_gym.utils.math import quat_apply_yaw, wrap_to_pi, torch_rand_sqrt_float, quat_to_rot_matrix
 from legged_gym.utils.helpers import class_to_dict
 from .legged_robot_config import LeggedRobotCfg
 
@@ -256,7 +256,7 @@ class LeggedRobot(BaseTask):
                                     self.dof_vel * self.obs_scales.dof_vel,
                                     self.actions
                                     ),dim=-1)
-        print("OBS SHAPE: ", self.base_ang_vel.shape)
+        # print("OBS SHAPE: ", self.base_ang_vel.shape)
         # add noise if needed
         if self.add_noise:
             current_obs += (2 * torch.rand_like(current_obs) - 1) * self.noise_scale_vec[0:(9 + 3 * self.num_actions)]
@@ -270,9 +270,9 @@ class LeggedRobot(BaseTask):
 
         self.obs_buf = torch.cat((current_obs[:, :self.num_one_step_obs], self.obs_buf[:, :-self.num_one_step_obs]), dim=-1)
         self.scandots_buf = heights
-        print(f"SCANDOT:{self.scandots_buf.shape}")
+        # print(f"SCANDOT:{self.scandots_buf.shape}")
         self.privileged_obs_buf = torch.cat((current_obs[:, :self.num_one_step_privileged_obs], self.privileged_obs_buf[:, :-self.num_one_step_privileged_obs]), dim=-1)
-        print("OBS BUF SHAPE: ", self.obs_buf.shape)
+        # print("OBS BUF SHAPE: ", self.obs_buf.shape)
                 
     def compute_termination_observations(self, env_ids):
         """ Computes observations
@@ -825,6 +825,7 @@ class LeggedRobot(BaseTask):
         self.dof_names = self.gym.get_asset_dof_names(robot_asset)
         print(f"DOF NAMES:{self.dof_names}")
         self.num_bodies = len(body_names)
+        print(f"BODY NAMES:{body_names}")
         self.num_dofs = len(self.dof_names)
         feet_names = [s for s in body_names if self.cfg.asset.foot_name in s]
         penalized_contact_names = []
@@ -1241,8 +1242,8 @@ class LeggedRobot(BaseTask):
         for i in range(len(self.feet_indices)):
             footpos_in_body_frame[:, i, :] = quat_rotate_inverse(self.base_quat, cur_footpos_translated[:, i, :])
 
-        foot_dist_y = torch.abs(footpos_in_body_frame[:, 0, 0] - footpos_in_body_frame[:, 1, 0])
-        return (self.cfg.rewards.min_foot_dist - foot_dist_y).clip(min=0.)
+        foot_dist_y = torch.abs(footpos_in_body_frame[:, 0, 1] - footpos_in_body_frame[:, 1, 1])
+        return (-(self.cfg.rewards.min_foot_dist - foot_dist_y).clip(min=0.))
     
     def _reward_no_fly(self):
         #rewards having only 1 feet on ground 
@@ -1262,116 +1263,83 @@ class LeggedRobot(BaseTask):
     def _reward_feet_parallel(self):
         # penalize non-parallel feet
         return torch.sum(torch.var(self.feet_rot, dim=1), dim=1)
-    
-        ## NOTE: Feet Rot usingffeet_vel
-        # cur_footvel_translated = self.feet_vel - self.root_states[:, 7:10].unsqueeze(1)
-        # footvel_in_body_frame = torch.zeros(self.num_envs, len(self.feet_indices), 3, device=self.device)
-        # for i in range(len(self.feet_indices)):
-        #     footvel_in_body_frame[:, i, :] = quat_rotate_inverse(self.base_quat, cur_footvel_translated[:, i, :])
-        # foot_vel_xy = footvel_in_body_frame[:, :, 0:2]
-        # magnitudes = torch.norm(foot_vel_xy, dim=2)
-        # foot_orientations = torch.zeros(self.num_envs, len(self.feet_indices), device=self.device)
-        
-        # # Calculate orientation where velocity is significant
-        # for i in range(len(self.feet_indices)):
-        #     # Mask for significant movement
-        #     mask = magnitudes[:, i] > 0.05
-            
-        #     if torch.any(mask):
-        #         # Calculate orientation from velocity direction
-        #         vx = foot_vel_xy[mask, i, 0]
-        #         vy = foot_vel_xy[mask, i, 1]
-        #         foot_orientations[mask, i] = torch.atan2(vy, vx)
-        
-        # return torch.var(foot_orientations, dim=1)
-    
-    def _reward_feet_ground_parallel(self):
-        """
-        Calculate reward for keeping feet parallel to the ground.
-        
-        Args:
-            feet_pos: Tensor of shape [batch_size, 2, 3] with positions of left and right feet
-            feet_rot: Tensor of shape [batch_size, 2, 4] with quaternion orientations of left and right feet
-                
-        Returns:
-            Tensor: Reward values of shape [batch_size]
-        """
-        
-        # Define sample points on each foot (in foot frame)
-        foot_points = torch.tensor([
-            [0.1, 0.0, 0.0],    # front
-            [0.0, 0.0, 0.0],    # middle
-            [-0.1, 0.0, 0.0],   # hind
-            [0.0, 0.02, 0.0],   # left
-            [0.0, -0.02, 0.0]   # right
-        ], dtype=torch.float32, device=self.device)  # Shape: [5, 3]
-        
-        # Convert quaternions to rotation matrices
-        # Note: You may need to adjust this based on your quaternion convention
-        def quat_to_rot_matrix(q):
-            # q has shape [batch_size, 2, 4] (x, y, z, w)
-            x, y, z, w = q[..., 0], q[..., 1], q[..., 2], q[..., 3]
-            
-            rot_matrix = torch.zeros((*q.shape[:-1], 3, 3), device=self.device)
-            
-            # Fill rotation matrix elements
-            rot_matrix[..., 0, 0] = 1 - 2 * (y**2 + z**2)
-            rot_matrix[..., 0, 1] = 2 * (x*y - z*w)
-            rot_matrix[..., 0, 2] = 2 * (x*z + y*w)
-            rot_matrix[..., 1, 0] = 2 * (x*y + z*w)
-            rot_matrix[..., 1, 1] = 1 - 2 * (x**2 + z**2)
-            rot_matrix[..., 1, 2] = 2 * (y*z - x*w)
-            rot_matrix[..., 2, 0] = 2 * (x*z - y*w)
-            rot_matrix[..., 2, 1] = 2 * (y*z + x*w)
-            rot_matrix[..., 2, 2] = 1 - 2 * (x**2 + y**2)
-            
-            return rot_matrix
-        
-        # Convert quaternions to rotation matrices
-        feet_rot_matrices = quat_to_rot_matrix(self.feet_rot)  # Shape: [batch_size, 2, 3, 3]
-        
-        # Create containers for world points
-        left_point_heights = torch.zeros(self.num_envs, 5, device=self.device)
-        right_point_heights = torch.zeros(self.num_envs, 5, device=self.device)
-        
-        feet_heights = self._get_feet_heights()
-        # print(f"Feet Heights: {feet_heights[:,0].shape}")
-        
-        # Transform points for each foot
-        for i in range(5):
-        # Get the local point coordinates
-            point = foot_points[i]  # Shape: [3]
-            
-            # For left foot (index 0)
-            # Rotate point in foot frame
-            rotated_point = torch.matmul(feet_rot_matrices[:, 0], point)  # Shape: [batch_size, 3]
-            # Only the Z component affects height
-            height_offset = rotated_point[:, 2]
-            # print(f"Height Offset: {height_offset.shape}")
-            # Add to the base height of the foot
-            left_point_heights[:, i] = feet_heights[:, 0] + height_offset
-            
-            # For right foot (index 1)
-            # Rotate point in foot frame
-            rotated_point = torch.matmul(feet_rot_matrices[:, 1], point)  # Shape: [batch_size, 3]
-            # Only the Z component affects height
-            height_offset = rotated_point[:, 2]
-            # Add to the base height of the foot
-            right_point_heights[:, i] = feet_heights[:, 1] + height_offset                       
-        
-        # Calculate variance of heights for each foot in each batch element
-        left_variance = torch.var(left_point_heights, dim=1)   # Shape: [batch_size]
-        right_variance = torch.var(right_point_heights, dim=1)  # Shape: [batch_size]
-        
-        # Reward is negative variance (higher variance = more penalty)
-        return (left_variance + right_variance)
 
+    def _reward_feet_ground_parallel(self):
+        feet_heights = self._get_feet_heights()
+        foot_rot_in_body_frame = torch.zeros(self.num_envs, len(self.feet_indices), 4, device=self.device)
+        base_quat_conj = quat_conjugate(self.base_quat)
+        # print("CONJ SHAPE:", base_quat_conj.shape)
+        # print("FEET ROT SHAPE:", self.feet_rot[:, 0, :].shape)
+        for i in range(len(self.feet_indices)):
+            foot_rot_in_body_frame[:, i, :] = quat_multiply(base_quat_conj, self.feet_rot[:, i, :])
+        
+        # 1. Define 5 local points on the foot sole (in foot's local frame)
+        #    (X-forward, Y-left, Z-up in local foot frame)
+        #    These points have Z=0 in the local foot frame.
+        local_foot_sample_points = torch.tensor([
+            [0.1,  0.00, 0.0],   # Front
+            [0.0,  0.00, 0.0],   # Middle (origin of local sampling)
+            [-0.1, 0.00, 0.0],   # Hind/Heel
+            [0.0,  0.02, 0.0],   # Left side of the foot
+            [0.0, -0.02, 0.0]    # Right side of the foot
+        ], dtype=torch.float32, device=self.device)  # Shape: [5, 3]
+
+        # Transpose for matrix multiplication: [3, 5] so each column is a point
+        local_foot_sample_points_t = local_foot_sample_points.T
+
+        # 2. Convert foot orientation quaternions to rotation matrices
+        # These matrices rotate from local foot frame to robot body frame.
+        # feet_rot_b has shape [batch_size, 2, 4]
+        # foot_rot_matrix will have shape [batch_size, 2, 3, 3]
+        foot_rot_matrix = quat_to_rot_matrix(foot_rot_in_body_frame)
+
+        # Separate rotation matrices for left (index 0) and right (index 1) feet
+        # Each will have shape [batch_size, 3, 3]
+        left_foot_rot_matrix = foot_rot_matrix[:, 0]
+        right_foot_rot_matrix = foot_rot_matrix[:, 1]
+
+        # 3. Transform local sample points to get their offsets in the robot body frame
+        # torch.matmul([B, 3, 3], [3, 5]) -> [B, 3, 5]
+        # These are the offsets of sample points from their respective foot origins,
+        # expressed in the robot body frame.
+        left_sample_offset = torch.matmul(left_foot_rot_matrix, local_foot_sample_points_t)
+        right_sample_offset = torch.matmul(right_foot_rot_matrix, local_foot_sample_points_t)
+
+        # 4. Extract the Z-component of these offsets (height offset due to tilt)
+        # Shape: [batch_size, 5]
+        left_z_offset = left_sample_offset[:, 2, :]
+        right_z_offset = right_sample_offset[:, 2, :]
+
+        # 5. Add these Z-offsets to the foot's base height from the ground
+        # feet_base_heights_from_ground has shape [batch_size, 2]
+        # We need to unsqueeze to make it [batch_size, 1] for broadcasting with [batch_size, 5]
+        # print(f"FEET H:{feet_heights[:,0].shape} | {left_z_offset.shape}")
+        left_foot_sample_heights = feet_heights[:, 0].unsqueeze(1) + left_z_offset
+        right_foot_sample_heights = feet_heights[:, 1].unsqueeze(1) + right_z_offset
+
+        left_foot_var = torch.var(left_foot_sample_heights, dim=1)
+        right_foot_var = torch.var(right_foot_sample_heights, dim=1)
+
+        return (left_foot_var + right_foot_var)
+    
     def _reward_contact_momentum(self):
         cur_footvel_translated = self.feet_vel - self.root_states[:, 7:10].unsqueeze(1)
         footvel_in_body_frame = torch.zeros(self.num_envs, len(self.feet_indices), 3, device=self.device)
         for i in range(len(self.feet_indices)):
             footvel_in_body_frame[:, i, :] = quat_rotate_inverse(self.base_quat, cur_footvel_translated[:, i, :])
-        return torch.sum((footvel_in_body_frame[:, :, 2] * self.contact_forces[:, self.feet_indices, 2]), dim=1)
+        contact_momentum = torch.abs(footvel_in_body_frame[:, :, 2] * self.contact_forces[:, self.feet_indices, 2])
+        print(f"CM:{contact_momentum}")
+
+        return torch.sum(contact_momentum, dim=1)
+    
+    def _reward_cheat(self):
+        # penalty cheating to bypass the obstacle
+        forward = quat_apply(self.base_quat, self.forward_vec)
+        heading = torch.atan2(forward[:, 1], forward[:, 0])
+        cheat = (heading > 1.0) | (heading < -1.0)
+        cheat_penalty = torch.zeros(self.num_envs, device=self.device)
+        cheat_penalty[:] = cheat
+        return cheat_penalty
 
     
 

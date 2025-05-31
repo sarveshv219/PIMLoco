@@ -94,7 +94,7 @@ class HIMEstimator(nn.Module):
         #                       next_critic_obs.detach()[:, -117:]), dim=-1)
         s_input = torch.cat((obs_history, scandots), dim=-1)
         t_input = torch.cat((next_obs, next_scandots), dim=-1)
-        # t_input = torch.cat(next_obs, scandots, dim=-1) NOTE: PAPER DOESNT MENTION Op(t+1)
+        # t_input = torch.cat((next_obs, scandots), dim=-1) #NOTE: PAPER DOESNT MENTION Op(t+1)
         print("Encoder Input shape:", s_input.shape)
         print("Target Input shape:", t_input.shape)
         z_s = self.encoder(s_input)

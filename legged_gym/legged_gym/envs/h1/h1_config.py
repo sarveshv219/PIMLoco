@@ -3,18 +3,45 @@ from legged_gym.envs.base.legged_robot_config import LeggedRobotCfg, LeggedRobot
 class H1Cfg( LeggedRobotCfg ):
     class init_state( LeggedRobotCfg.init_state ):
         pos = [0.0, 0.0, 1.05] # x,y,z [m]
-        default_joint_angles = { # = target angles [rad] when action = 0.0
+        ##Unitree
+        # default_joint_angles = { # = target angles [rad] when action = 0.0
+        #    'left_hip_yaw_joint' : 0. ,   
+        #    'left_hip_roll_joint' : 0,               
+        #    'left_hip_pitch_joint' : -0.1,         
+        #    'left_knee_joint' : 0.3,       
+        #    'left_ankle_joint' : -0.2,   
+
+        #    'right_hip_yaw_joint' : 0., 
+        #    'right_hip_roll_joint' : 0, 
+        #    'right_hip_pitch_joint' : -0.1,                                       
+        #    'right_knee_joint' : 0.3,                                             
+        #    'right_ankle_joint' : -0.2,   
+
+        #    'torso_joint' : 0., 
+
+        #    'left_shoulder_pitch_joint' : 0., 
+        #    'left_shoulder_roll_joint' : 0, 
+        #    'left_shoulder_yaw_joint' : 0.,
+        #    'left_elbow_joint'  : 0.,
+
+        #    'right_shoulder_pitch_joint' : 0.,
+        #    'right_shoulder_roll_joint' : 0.0,
+        #    'right_shoulder_yaw_joint' : 0.,
+        #    'right_elbow_joint' : 0.,
+        # }
+        ##Lecar
+        default_joint_angles = { 
            'left_hip_yaw_joint' : 0. ,   
            'left_hip_roll_joint' : 0,               
-           'left_hip_pitch_joint' : -0.1,         
-           'left_knee_joint' : 0.3,       
-           'left_ankle_joint' : -0.2,   
+           'left_hip_pitch_joint' : -0.4,         
+           'left_knee_joint' : 0.8,       
+           'left_ankle_joint' : -0.4, 
 
            'right_hip_yaw_joint' : 0., 
            'right_hip_roll_joint' : 0, 
-           'right_hip_pitch_joint' : -0.1,                                       
-           'right_knee_joint' : 0.3,                                             
-           'right_ankle_joint' : -0.2,   
+           'right_hip_pitch_joint' : -0.4,                                       
+           'right_knee_joint' : 0.8,                                             
+           'right_ankle_joint' : -0.4,
 
            'torso_joint' : 0., 
 
@@ -31,7 +58,7 @@ class H1Cfg( LeggedRobotCfg ):
        
     class commands ( LeggedRobotCfg.commands ):
         curriculum = True
-        max_curriculum = 2.
+        max_curriculum = 1.
         num_commands = 4 # default: lin_vel_x, lin_vel_y, ang_vel_yaw, heading (in heading mode ang_vel_yaw is recomputed from heading error)
         resampling_time = 10. # time before command are changed[s]
         heading_command = False # if true: compute ang vel command from heading error
@@ -45,42 +72,42 @@ class H1Cfg( LeggedRobotCfg ):
         # PD Drive parameters:
         control_type = 'P'
           # PD Drive parameters:
-        # stiffness = {'hip_yaw': 200,
-        #              'hip_roll': 200,
-        #              'hip_pitch': 200,
-        #              'knee': 300,
-        #              'ankle': 40,
-        #              'torso': 300,
-        #              'shoulder': 100,
-        #              "elbow":100,
-        #              }  # [N*m/rad]
-        # damping = {  'hip_yaw': 5,
-        #              'hip_roll': 5,
-        #              'hip_pitch': 5,
-        #              'knee': 6,
-        #              'ankle': 2,
-        #              'torso': 6,
-        #              'shoulder': 2,
-        #              "elbow":2,
-        #              }  # [N*m/rad]  # [N*m*s/rad]
-        stiffness = {'hip_yaw': 150,
-                     'hip_roll': 150,
-                     'hip_pitch': 150,
-                     'knee': 200,
+        stiffness = {'hip_yaw': 200,
+                     'hip_roll': 200,
+                     'hip_pitch': 200, #200
+                     'knee': 300, #300
                      'ankle': 40,
                      'torso': 300,
-                     'shoulder': 150,
+                     'shoulder': 100,
                      "elbow":100,
                      }  # [N*m/rad]
-        damping = {  'hip_yaw': 2,
-                     'hip_roll': 2,
-                     'hip_pitch': 2,
-                     'knee': 4,
+        damping = {  'hip_yaw': 5, #5
+                     'hip_roll': 5, #5
+                     'hip_pitch': 5, #5
+                     'knee': 6, #6
                      'ankle': 2,
                      'torso': 6,
                      'shoulder': 2,
                      "elbow":2,
                      }  # [N*m/rad]  # [N*m*s/rad]
+        # stiffness = {'hip_yaw': 150,
+        #              'hip_roll': 150,
+        #              'hip_pitch': 150,
+        #              'knee': 200,
+        #              'ankle': 40,
+        #              'torso': 300,
+        #              'shoulder': 150,
+        #              "elbow":100,
+        #              }  # [N*m/rad]
+        # damping = {  'hip_yaw': 2,
+        #              'hip_roll': 2,
+        #              'hip_pitch': 2,
+        #              'knee': 4,
+        #              'ankle': 2,
+        #              'torso': 6,
+        #              'shoulder': 2,
+        #              "elbow":2,
+        #              }  # [N*m/rad]  # [N*m*s/rad]
         # action scale: target angle = actionScale * action + defaultAngle
         action_scale_low = 0.25
         action_scale_up = 0.25
@@ -94,6 +121,7 @@ class H1Cfg( LeggedRobotCfg ):
         foot_name = "ankle"
         penalize_contacts_on = ["hip", "knee"]
         terminate_after_contacts_on = ["pelvis", "shoulder", "hip", "knee"]
+        # terminate_after_contacts_on = ["pelvis", "shoulder", "hip"]
         self_collisions = 1 # 1 to disable, 0 to enable...bitwise filter
         replace_cylinder_with_capsule = True
         flip_visual_attachments = False
@@ -109,16 +137,16 @@ class H1Cfg( LeggedRobotCfg ):
             orientation = -1.25
             dof_acc = -2.5e-7
             joint_power = -2e-5
-            base_height = -4. #-0.1
-            foot_clearance = -2. #-0.25
+            base_height = -0.1
+            foot_clearance = -0.25
             action_rate = -0.01
             smoothness = -0.01
             collision = -0.0
-            torques = -2.5e-6
-            dof_vel = -1e-4
-            dof_pos_limits = -2.0
-            dof_vel_limits = -0.1
-            torque_limits = -0.1
+            # torques = -2.5e-6
+            # dof_vel = -1e-4
+            # dof_pos_limits = -2.0
+            # dof_vel_limits = -0.1
+            # torque_limits = -0.1
             stumble = -3.
             joint_tracking = -0.25
             arm_deviation = -0.1
@@ -130,45 +158,22 @@ class H1Cfg( LeggedRobotCfg ):
             # feet_contact_forces = -2.5e-4
             feet_parallel = -2.5
             feet_ground_parallel = -2.
-            contact_momentum = -2.5e-4
+            # contact_momentum = -2.5e-4
 
         only_positive_rewards = False # if true negative total rewards are clipped at zero (avoids early termination problems)
         tracking_sigma = 0.25 # tracking reward = exp(-error^2/sigma)
         soft_dof_pos_limit = 1. # percentage of urdf limits, values above this limit are penalized
         soft_dof_vel_limit = 1.
         soft_torque_limit = 1.
-        base_height_target = 0.9 #1.05
+        base_height_target = 0.95 
         max_contact_force = 100. # forces above this value are penalized
-        clearance_height_target = -0.65
-        min_foot_dist = 0.5
+        clearance_height_target = -0.8
+        min_foot_dist = 0.3
 
         
 class H1CfgPPO( LeggedRobotCfgPPO ):
-    class algorithm:
-        # training params
-        value_loss_coef = 1.0
-        use_clipped_value_loss = True
-        clip_param = 0.2
-        entropy_coef = 0.005
-        num_learning_epochs = 5
-        num_mini_batches = 4 # mini batch size = num_envs*nsteps / nminibatches
-        learning_rate = 1.e-3 #5.e-4
-        schedule = 'adaptive' # could be adaptive, fixed
-        gamma = 0.99
-        lam = 0.95
-        desired_kl = 0.01
-        max_grad_norm = 0.2
-
     class runner( LeggedRobotCfgPPO.runner ):
         run_name = ''
         experiment_name = 'h1'
-        max_iterations = 10000
+        max_iterations = 15000
         
-        
-    class policy ( LeggedRobotCfgPPO.policy ):
-        init_noise_std = 1.0
-        actor_hidden_dims = [512, 256, 128]
-        # actor_hidden_dims = [512*4, 256*4, 128*4]
-        critic_hidden_dims = [512, 256, 128]
-        # critic_hidden_dims = [512*4, 256*4, 128*4]
-  

@@ -142,7 +142,7 @@ class HIMPPO:
                 mu_go = self.actor_critic.action_mean
                 value_go = self.actor_critic.evaluate(self.actor_critic.flip_critic_obs(critic_obs_batch.clone()))
 
-                print(f"UPDATE SHAPES {obs_batch.shape} | {mu_batch.shape}")
+                # print(f"UPDATE SHAPES {obs_batch.shape} | {mu_batch.shape}")
                 sigma_batch = self.actor_critic.action_std
                 entropy_batch = self.actor_critic.entropy
 

@@ -170,13 +170,13 @@ class HIMActorCritic(nn.Module):
     def update_distribution(self, obs_history, scandots):
         # print(obs_history.shape)
         with torch.no_grad():
-            print("RUNNING")
+            # print("RUNNING")
             vel, latent = self.estimator(obs_history, scandots)
         actor_input = torch.cat((obs_history[:,:self.num_one_step_obs], scandots, vel, latent), dim=-1)
         # actor_input = torch.cat((obs_history[:,:self.num_one_step_obs], 
         #                          obs_history[:,-117:], 
         #                          vel, latent), dim=-1)
-        print("Actor Input shape:", actor_input.shape)
+        # print("Actor Input shape:", actor_input.shape)
         mean = self.actor(actor_input)
         self.distribution = Normal(mean, mean*0. + self.std)
 
@@ -188,7 +188,7 @@ class HIMActorCritic(nn.Module):
         return self.distribution.log_prob(actions).sum(dim=-1)
 
     def act_inference(self, obs_history, scandots, observations=None):
-        print("RUUNING2")
+        # print("RUUNING2")
         vel, latent = self.estimator(obs_history, scandots)
         actions_mean = self.actor(torch.cat((obs_history[:,:self.num_one_step_obs], scandots, vel, latent), dim=-1))
         # actions_mean = self.actor(torch.cat((obs_history[:,:self.num_one_step_obs], 
