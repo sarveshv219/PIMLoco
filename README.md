@@ -1,17 +1,4 @@
-## Learning-based Locomotion Control from OpenRobotLab
-This repository contains learning-based locomotion control research from OpenRobotLab, currently including [Hybrid Internal Model](/projects/himloco/README.md) & [H-Infinity Locomotion Control](/projects/h_infinity/README.md).
-## 🔥 News
-- [2024-04] Code of HIMLoco is released.
-- [2024-04] We release the [paper](https://arxiv.org/abs/2404.14405) of H-Infinity Locomotion Control. Please check the :point_right: [webpage](https://junfeng-long.github.io/HINF/) :point_left: and view our demos! :sparkler:
-- [2024-01] HIMLoco is accepted by ICLR 2024.
-- [2023-12] We release the [paper](https://arxiv.org/abs/2312.11460) of HIMLoco. Please check the :point_right: [webpage](https://junfeng-long.github.io/HIMLoco/) :point_left: and view our demos! :sparkler:
-
-## 📝 TODO List
-- \[x\] Release the training code of HIMLoco, please see `rsl_rl/rsl_rl/algorithms/him_ppo.py`.
-- \[ \] Release deployment guidance of HIMLoco.
-- \[ \] Release the training code of H-Infinity Locomotion Control.
-- \[ \] Release deployment guidance of H-Infinity Locomotion Control.
-
+## Learning-based Locomotion Control for Humanoids based on Learning Humanoid Locomotion with Perceptive Internal Model(Long et al.) paper
 ## 📚 Getting Started
 
 ### Installation
@@ -21,7 +8,7 @@ We test our codes under the following environment:
 - Ubuntu 20.04
 - NVIDIA Driver: 525.147.05
 - CUDA 12.0
-- Python 3.7.16
+- Python 3.8.10
 - PyTorch 1.10.0+cu113
 - Isaac Gym: Preview 4
 
