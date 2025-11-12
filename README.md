@@ -1,4 +1,6 @@
-## Learning-based Locomotion Control for Humanoids based on Learning Humanoid Locomotion with Perceptive Internal Model(Long et al.) paper
+## Learning-based Locomotion Control for Humanoid
+
+Implementation based on Learning Humanoid Locomotion with Perceptive Internal Model(Long et al.) paper.
 ## 📚 Getting Started
 
 ### Installation
@@ -14,8 +16,8 @@ We test our codes under the following environment:
 
 1. Create an environment and install PyTorch:
 
-  - `conda create -n himloco python=3.7.16`
-  - `conda activate himloco`
+  - `conda create -n pimloco python=3.7.16`
+  - `conda activate pimloco`
   - `pip3 install torch==1.10.0+cu113 torchvision==0.11.1+cu113 torchaudio==0.10.0+cu113 -f https://download.pytorch.org/whl/cu113/torch_stable.html`
 
 2. Install Isaac Gym:
@@ -28,7 +30,7 @@ We test our codes under the following environment:
   - `cd HIMLoco`
 
 
-4. Install HIMLoco.
+4. Install PIMLoco.
   - `cd rsl_rl && pip install -e .`
   - `cd ../legged_gym && pip install -e .`
 
@@ -46,31 +48,4 @@ We test our codes under the following environment:
   - `python play.py`
 
 
-## 🔗 Citation
 
-If you find our work helpful, please cite:
-
-```bibtex
-@inproceedings{long2023him,
-  title={Hybrid Internal Model: Learning Agile Legged Locomotion with Simulated Robot Response},
-  author={Long, Junfeng and Wang, ZiRui and Li, Quanyi and Cao, Liu and Gao, Jiawei and Pang, Jiangmiao},
-  booktitle={The Twelfth International Conference on Learning Representations},
-  year={2024}
-}
-
-@misc{long2024hinf,
-  title={Learning H-Infinity Locomotion Control}, 
-  author={Junfeng Long and Wenye Yu and Quanyi Li and Zirui Wang and Dahua Lin and Jiangmiao Pang},
-  year={2024},
-  eprint={2404.14405},
-  archivePrefix={arXiv},
-}
-```
-
-## 📄 License
-<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" /></a>
-<br />
-This work is under the <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.
-
-## 👏 Acknowledgements
-- [legged_gym](https://github.com/leggedrobotics/legged_gym): Our codebase is built upon legged_gym.
